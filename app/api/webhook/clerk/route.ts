@@ -58,7 +58,7 @@ export async function POST(req: Request) {
     const { id, email_addresses, image_url, first_name, last_name, username } = evt.data;
 
     const user = {
-      clerkId: "user_2cGGXPyLS52KhH5GZKlxHC15efc",
+      clerkId: id,
       email: email_addresses[0].email_address,
       username: username!,
       firstName: first_name,
