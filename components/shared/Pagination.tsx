@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import React from "react";
+import React, { useState } from "react";
 import { Button } from "../ui/button";
 import { formUrlQuery } from "@/lib/utils";
 
@@ -12,11 +12,13 @@ type PaginationProps = {
 };
 
 const Pagination = ({ page, totalPages, urlParamName }: PaginationProps) => {
+  const [currentPage, setCurrentPage] = useState<number | string>(page);
   const router = useRouter();
   const searchParams = useSearchParams();
 
   const onClick = (btnType: string) => {
-    const pageValue = btnType === "next" ? Number(page) + 1 : Number(page) - 1;
+    const pageValue = btnType === "next" ? Number(currentPage) + 1 : Number(currentPage) - 1;
+    setCurrentPage(pageValue)
     const newUrl = formUrlQuery({
         params: searchParams.toString(),
         key: urlParamName || 'page',
@@ -33,7 +35,7 @@ const Pagination = ({ page, totalPages, urlParamName }: PaginationProps) => {
         variant="outline"
         className="w-28"
         onClick={() => onClick("prev")}
-        disabled={Number(page) <= 1}
+        disabled={Number(currentPage) <= 1}
       >
         Previous
       </Button>
@@ -43,7 +45,7 @@ const Pagination = ({ page, totalPages, urlParamName }: PaginationProps) => {
         variant="outline"
         className="w-28"
         onClick={() => onClick("next")}
-        disabled={Number(page) >= totalPages}
+        disabled={Number(currentPage) >= totalPages}
       >
         Next
       </Button>
