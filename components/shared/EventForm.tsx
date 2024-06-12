@@ -5,6 +5,17 @@ import { useForm } from "react-hook-form";
 
 import { Button } from "@/components/ui/button";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import {
   Form,
   FormControl,
   FormDescription,
@@ -29,6 +40,10 @@ import { useUploadThing } from "@/lib/uploadthing";
 import { useRouter } from "next/navigation";
 import { createEvent, updateEvent } from "@/lib/actions/event.actions";
 import { IEvent } from "@/lib/database/models/event.model";
+import { generateEventDescription } from "@/lib/actions/genAI.actions";
+import { marked } from "marked";
+import { Bounce, ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 type EventFormProps = {
   userId: string;
@@ -39,6 +54,9 @@ type EventFormProps = {
 
 const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
   const [files, setFiles] = useState<File[]>([]);
+  const [keywords, setKeywords] = useState<string>("");
+  const [description, setDescription] = useState<string>("");
+
   const initialValues =
     event && type === "Update"
       ? {
@@ -55,6 +73,12 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
     resolver: zodResolver(eventFormSchema),
     defaultValues: initialValues,
   });
+
+  const generateContent = async () => {
+    const eventDescription = await generateEventDescription(keywords);
+    console.log("eventDescription: ", eventDescription);
+    setDescription(eventDescription);
+  };
 
   async function onSubmit(values: z.infer<typeof eventFormSchema>) {
     const eventData = values;
@@ -157,11 +181,70 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
             render={({ field }) => (
               <FormItem className="w-full">
                 <FormControl className="h-72">
-                  <Textarea
-                    placeholder="Description"
-                    {...field}
-                    className="textarea rounded-2xl"
-                  />
+                  <div className="relative">
+                    <Textarea
+                      placeholder="Description"
+                      {...field}
+                      className="textarea rounded-2xl h-full"
+                    />
+                    <AlertDialog>
+                      <AlertDialogTrigger
+                        asChild
+                        className="rounded-full absolute bottom-1.5 right-1.5"
+                      >
+                        <Button type="button">
+                          Generate description by AI
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent className="bg-white">
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>
+                            Generate description by AI
+                          </AlertDialogTitle>
+                          <AlertDialogDescription>
+                            <div className="mb-2 font-semibold">
+                              Please key in the keywords about your Event
+                            </div>
+                            <div className="flex w-full items-center space-x-2 mb-2">
+                              <Input
+                                required
+                                type="email"
+                                placeholder="Type keywords here"
+                                onChange={(e) => setKeywords(e.target.value)}
+                              />
+                              <Button
+                                type="submit"
+                                onClick={() => generateContent()}
+                              >
+                                Generate
+                              </Button>
+                            </div>
+                            <div className="mb-2 font-semibold">
+                              Result - Please copy it for your usage
+                            </div>
+
+                            <div className="w-full h-full min-h-24">
+                              {" "}
+                              {!description ? (
+                                <div className="italic">
+                                  The description will be generated here
+                                </div>
+                              ) : (
+                                <div
+                                  dangerouslySetInnerHTML={{
+                                    __html: `${marked.parse(description)}`,
+                                  }}
+                                ></div>
+                              )}
+                            </div>
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
                 </FormControl>
                 <FormMessage />
               </FormItem>
